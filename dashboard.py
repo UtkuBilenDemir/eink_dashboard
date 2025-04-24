@@ -5,6 +5,7 @@ import toggl
 
 DAILY_GOAL_MIN = 390
 WEEKLY_GOAL_MIN = DAILY_GOAL_MIN * 5
+START_TRACKING_DATE = (2025, 4, 9)  # year, month, day
 
 # Layout Constants
 BAR_WIDTH = 280
@@ -22,13 +23,11 @@ font_bold = ImageFont.truetype(font_path, 26)
 
 # Utility
 def minutes_to_str(mins):
-    """Handle both numbers and (date, minutes) tuples"""
     if isinstance(mins, (tuple, list)):
-        mins = mins[1]  # Extract minutes from tuple
+        mins = mins[1]
     return f"{mins//60}h {mins%60}m"
 
 def format_best_entry(entry):
-    """Format best day/week entry with date and time"""
     if not entry or not entry[0]:
         return "No data"
     return f"{entry[0]} ({minutes_to_str(entry)})"
@@ -38,10 +37,8 @@ def draw_label_value(draw, label, value, y):
     return y + LINE_HEIGHT + LINE_SPACING
 
 def draw_label_bar(draw, label, value_str, minutes, goal, y):
-    # Label and value on same line
     draw.text((X_MARGIN, y), f"{label}: {value_str}", font=font, fill=0)
     y += LINE_HEIGHT
-    # Progress bar
     ratio = min(minutes / goal, 1.0)
     draw.rectangle([X_BAR, y, X_BAR + BAR_WIDTH, y + BAR_HEIGHT], outline=0)
     draw.rectangle([X_BAR, y, X_BAR + int(BAR_WIDTH * ratio), y + BAR_HEIGHT], fill=0)
@@ -57,6 +54,7 @@ draw = ImageDraw.Draw(image)
 
 # Get data
 data = toggl.get_productivity_data()
+total_debt = toggl.get_total_debt()
 
 # Draw sections
 y = Y_START
@@ -84,6 +82,9 @@ if debt > 0:
     draw.text((X_MARGIN, y), f"You owe: {minutes_to_str(debt)} today", font=font, fill=0)
 else:
     draw.text((X_MARGIN, y), "✅ Daily goal reached!", font=font, fill=0)
+
+y += LINE_HEIGHT + LINE_SPACING
+draw.text((X_MARGIN, y), f"Total debt since Apr 9: {minutes_to_str(total_debt)}", font=font, fill=0)
 
 # Show image
 epd.display(epd.getbuffer(image))
